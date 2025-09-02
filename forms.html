@@ -12,6 +12,8 @@
             --cor-fundo: #f5f5f5;
             --cor-borda: #ddd;
             --cor-texto: #333;
+            --cor-sucesso: #4caf50;
+            --cor-erro: #f44336;
         }
         
         body {
@@ -33,6 +35,7 @@
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
         }
         
         label {
@@ -98,6 +101,65 @@
             margin-bottom: 0;
             font-weight: normal;
         }
+        
+        .radio-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .radio-item {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+        
+        .radio-item input[type="radio"] {
+            width: auto;
+            margin-right: 5px;
+            margin-bottom: 0;
+        }
+        
+        .radio-item label {
+            display: inline;
+            margin-bottom: 0;
+            font-weight: normal;
+        }
+        
+        #outros-sexo-container {
+            display: none;
+            margin-top: 10px;
+        }
+        
+        #resultado {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .sucesso {
+            color: var(--cor-sucesso);
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .dados-usuario {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid var(--botao-azul);
+            overflow-x: auto;
+        }
+        
+        .erro {
+            color: var(--cor-erro);
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body>
@@ -118,6 +180,31 @@
         <div>
             <label for="celular">Telefone</label>
             <input type="tel" id="celular" name="celular" maxlength="15" required placeholder="(00) 00000-0000">
+        </div>
+        
+        <div>
+            <label>Sexo:</label>
+            <div class="radio-group">
+                <div class="radio-item">
+                    <input type="radio" id="masculino" name="sexo" value="Masculino" checked>
+                    <label for="masculino">Masculino</label>
+                </div>
+                
+                <div class="radio-item">
+                    <input type="radio" id="feminino" name="sexo" value="Feminino">
+                    <label for="feminino">Feminino</label>
+                </div>
+                
+                <div class="radio-item">
+                    <input type="radio" id="outros" name="sexo" value="Outros">
+                    <label for="outros">Outros</label>
+                </div>
+            </div>
+            
+            <div id="outros-sexo-container">
+                <label for="outros-sexo">Especifique:</label>
+                <input type="text" id="outros-sexo" name="outros-sexo" placeholder="Digite seu gênero" maxlength="30">
+            </div>
         </div>
         
         <div>
@@ -207,18 +294,126 @@
         <button type="button" onclick="enviarFormulario()">Enviar</button>
     </form>
 
+    <div id="resultado">
+        <!-- Aqui serão exibidos os resultados -->
+    </div>
+
     <script>
+        // Adicionar evento para mostrar campo "Outros" quando selecionado
+        document.querySelectorAll('input[name="sexo"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const outrosContainer = document.getElementById('outros-sexo-container');
+                if (this.value === 'Outros') {
+                    outrosContainer.style.display = 'block';
+                } else {
+                    outrosContainer.style.display = 'none';
+                    document.getElementById('outros-sexo').value = '';
+                }
+            });
+        });
+
         function enviarFormulario() {
+            // Coletar dados do formulário
             let nome = document.getElementById('nome').value;
+            let email = document.getElementById('email').value;
+            let celular = document.getElementById('celular').value;
+            
+            // Coletar sexo selecionado
+            let sexoSelecionado = document.querySelector('input[name="sexo"]:checked').value;
+            if (sexoSelecionado === 'Outros') {
+                let outrosSexo = document.getElementById('outros-sexo').value;
+                if (outrosSexo.trim() !== '') {
+                    sexoSelecionado = outrosSexo;
+                }
+            }
+            
             let senha = document.getElementById('senha').value;
             let confirmarSenha = document.getElementById('confirmarSenha').value;
+            let estado = document.getElementById('estado').value;
+            let experiencia = document.getElementById('experiencia').value;
+            let nascimento = document.getElementById('nascimento').value;
             
-            if(senha === confirmarSenha) {
-                alert('Seu formulário foi enviado com sucesso!');
-                // Aqui você normalmente enviaria os dados para o servidor
-            } else {
-                alert('As senhas não coincidem. Por favor, corrija para prosseguir.');
+            // Coletar linguagens selecionadas
+            let linguagensSelecionadas = [];
+            document.querySelectorAll('input[name="linguagens"]:checked').forEach(function(checkbox) {
+                linguagensSelecionadas.push(checkbox.value);
+            });
+            
+            // Validar senhas
+            if(senha !== confirmarSenha) {
+                mostrarResultado('erro', 'As senhas não coincidem. Por favor, corrija para prosseguir.');
+                return;
             }
+            
+            // Criar objeto com os dados
+            const dadosUsuario = {
+                nome: nome,
+                email: email,
+                celular: celular,
+                sexo: sexoSelecionado,
+                senha: senha, // Em um caso real, a senha não seria armazenada assim
+                linguagens: linguagensSelecionadas,
+                estado: estado,
+                experiencia: experiencia + ' anos',
+                nascimento: formatarData(nascimento)
+            };
+            
+            // Exibir no console
+            console.log('Dados do usuário:', dadosUsuario);
+            
+            // Exibir alerta com os dados
+            mostrarAlerta(dadosUsuario);
+            
+            // Exibir na página
+            mostrarResultado('sucesso', 'Formulário enviado com sucesso!', dadosUsuario);
+        }
+        
+        function formatarData(data) {
+            if (!data) return '';
+            const partes = data.split('-');
+            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+        
+        function mostrarResultado(tipo, mensagem, dados = null) {
+            const resultadoDiv = document.getElementById('resultado');
+            resultadoDiv.style.display = 'block';
+            
+            if (tipo === 'sucesso') {
+                resultadoDiv.innerHTML = `
+                    <div class="sucesso">${mensagem}</div>
+                    <div class="dados-usuario">
+                        <h3>Dados enviados:</h3>
+                        <pre>${JSON.stringify(dados, null, 2)}</pre>
+                    </div>
+                `;
+            } else {
+                resultadoDiv.innerHTML = `<div class="erro">${mensagem}</div>`;
+            }
+            
+            // Rolagem suave para o resultado
+            resultadoDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Função para mostrar alerta com os dados
+        function mostrarAlerta(dados) {
+            // Formatar as linguagens como uma string
+            const linguagensFormatadas = dados.linguagens.join(', ');
+            
+            // Criar mensagem para o alerta
+            const mensagemAlerta = `
+Dados do Formulário:
+Nome: ${dados.nome}
+Email: ${dados.email}
+Telefone: ${dados.celular}
+Sexo: ${dados.sexo}
+Linguagens: ${linguagensFormatadas}
+Estado: ${dados.estado}
+Experiência: ${dados.experiencia}
+Data de Nascimento: ${dados.nascimento}
+            `;
+            
+            // Exibir alerta
+            alert(mensagemAlerta);
         }
         
         // Máscara para o telefone
